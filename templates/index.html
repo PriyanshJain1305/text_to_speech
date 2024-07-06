@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Speech</title>
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> -->
+
+
+    <style>
+        body {
+            font-family: cursive;
+            background-color: #60dcf1;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 60px auto;
+            padding: 30px;
+            background-color: #75eeca;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        #wordCount {
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        select,
+        input[type=number] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            border: 1px solid #220430;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Text to Speech Converter</h1>
+        <form id="textForm">
+            <textarea id="textInput" placeholder="Enter text here..."></textarea>
+            <div id="wordCount">0/2000 words</div>
+            <select id="voiceSelect">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+            <label for="speedInput">Speed (50-300):</label>
+            <input type="number" id="speedInput" name="speed" min="50" max="300" value="150">
+            <button type="submit">Convert to Speech</button>
+        </form>
+        <audio id="audioPlayer" controls></audio>
+    </div>
+
+    <script>
+        document.getElementById('textForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const text = document.getElementById('textInput').value;
+            const voice = document.getElementById('voiceSelect').value;
+            const speed = document.getElementById('speedInput').value;
+            const wordCount = text.split(/\s+/).length;
+
+            if (wordCount > 2000) {
+                alert("Word limit exceeded. Please enter 2000 words or less.");
+                return;
+            }
+
+            fetch('/texttospeech', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: text, voice: voice, speed: parseInt(speed) }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const audioBase64 = data.audio_base64;
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    audioPlayer.src = 'data:audio/mp3;base64,' + audioBase64;
+                    audioPlayer.play();
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        });
+
+        document.getElementById('textInput').addEventListener('input', function () {
+            const text = this.value;
+            const wordCount = text.split(/\s+/).filter(word => word.length > 0).length;
+            document.getElementById('wordCount').textContent = `${wordCount}/50 words`;
+        });
+    </script>
+</body>
+
+</html>
